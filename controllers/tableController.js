@@ -1,4 +1,6 @@
 import Table from "../models/tableModel.js";
+import Cart from "../models/cartModel.js";
+import { generateQR, deleteQr } from "../utils/generateQR.js";
 
 // @desc    Get all tables
 // @route   GET /
@@ -25,19 +27,46 @@ const getAllTables = async (req, res) => {
 // @route   POST /
 // @access  Public
 const createTable = async (req, res) => {
-  const table = new Table(req.body);
+  const { number } = req.body;
+
   try {
+    // Check if the table with the given number already exists
+    const existingTable = await Table.findOne({ number });
+
+    if (existingTable) {
+      return res.status(409).json({
+        success: false,
+        message: `Table with number ${number} already exists`,
+      });
+    }
+    // Create a new cart for the table
+    const cart = new Cart();
+    await cart.save();
+
+    // Generate QR code for the table
+    const qrCodeFilePath = await generateQR(number);
+
+    // Create a new table
+    const table = new Table({
+      number,
+      status: "free", // Set the initial status to "free" or adjust as needed
+      qrCode: qrCodeFilePath,
+      cart: cart._id, // Set the cart ID for the table
+    });
+
+    // Save the table
     await table.save();
+
     res.status(201).json({
       success: true,
       message: "Table created successfully",
       data: table,
     });
   } catch (error) {
-    res.status(409).json({
+    res.status(500).json({
       success: false,
-      message: error.message,
       message: "Something went wrong while creating the table",
+      error: error.message,
     });
   }
 };
@@ -100,12 +129,79 @@ const changeTableStatus = async (req, res) => {
   }
 };
 
+// @desc    Reserve a table
+// @route   PUT /reserve
+// @access  Public
+const reserveTable = async (req, res) => {
+  try {
+    const table = await Table.findByIdAndUpdate(
+      req.params.id,
+      { status: "reserved" },
+      { new: true }
+    );
+    if (!table) {
+      return res.status(404).json({
+        success: false,
+        message: "Table not found",
+      });
+    }
+    res.status(200).json({
+      success: true,
+      data: table,
+      message: "Table reserved successfully",
+    });
+  } catch (error) {
+    res.status(404).json({
+      success: false,
+      message: error.message,
+      message: "Something went wrong while reserving the table",
+    });
+  }
+};
+
+// @desc    Release a table
+// @route   PUT /release
+// @access  Public
+const releaseTable = async (req, res) => {
+  try {
+    const table = await Table.findByIdAndUpdate(
+      req.params.id,
+      { status: "free" },
+      { new: true }
+    );
+    if (!table) {
+      return res.status(404).json({
+        success: false,
+        message: "Table not found",
+      });
+    }
+    res.status(200).json({
+      success: true,
+      data: table,
+      message: "Table released successfully",
+    });
+  } catch (error) {
+    res.status(404).json({
+      success: false,
+      message: error.message,
+      message: "Something went wrong while releasing the table",
+    });
+  }
+};
+
 // @desc    Delete table
 // @route   DELETE /:id
 // @access  Private
 const deleteTable = async (req, res) => {
   try {
-    await Table.findByIdAndDelete(req.params.id);
+    const table = await Table.findById(req.params.id);
+    if (!table) {
+      return res.status(404).json({
+        success: false,
+        message: "Table not found",
+      });
+    }
+    await deleteQr(table.qrCode);
     res.status(200).json({
       success: true,
       message: "Table deleted successfully",
@@ -124,5 +220,7 @@ export {
   createTable,
   getTablesStatus,
   changeTableStatus,
+  reserveTable,
+  releaseTable,
   deleteTable,
 };

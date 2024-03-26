@@ -1,143 +1,212 @@
 import Order from "../models/orderModel.js";
 import Table from "../models/tableModel.js";
+import Cart from "../models/cartModel.js";
+import Product from "../models/productModel.js";
 
-// @desc    Fetch all orders
-// @route   GET /orders
+// @desc    Place an order from the cart
+// @route   POST /place-order/:tableNumber
 // @access  Public
-const getAllOrders = async (req, res) => {
-  try {
-    const orders = await Order.find();
-    if (!orders) {
-      return res.status(404).json({
-        success: false,
-        message: "No orders found",
-      });
-    }
-    res.status(200).json({
-      data: orders,
-      success: true,
-      message: "All orders fetched successfully",
-    });
-  } catch (error) {
-    res.status(500).json({
-      error: error.message,
-      success: false,
-      message: "Something went wrong while fetching all orders",
-    });
-  }
-};
+const placeOrder = async (req, res) => {
+  const tableNumber = req.params.tableNumber;
 
-// @desc    Create a new order
-// @route   POST /orders
-// @access  Private
-const createOrder = async (req, res) => {
   try {
-    // check if the table is empty
-    const table = await Table.find({ status: "free", number: req.body.number });
+    // Find the table based on the provided table number
+    const table = await Table.findOne({ number: tableNumber, status: "free" });
+
     if (!table) {
       return res.status(404).json({
         success: false,
-        message: "Table is Occupied right now",
+        message: "Table not found",
       });
     }
-    // if table is empty create a new order
-    const order = new Order(req.body);
+
+    // Find the cart associated with the table
+    const cart = await Cart.findById(table.cart);
+
+    if (!cart) {
+      return res.status(404).json({
+        success: false,
+        message: "Cart not found",
+      });
+    }
+
+    // Check if the cart has items
+    if (cart.items.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Cart is empty. Add items to the cart before placing an order.",
+      });
+    }
+
+    // Calculate the total money based on the items in the cart
+    let totalMoney = 0;
+    for (const item of cart.items) {
+      const product = await Product.findById(item.product);
+      totalMoney += product.price * item.quantity;
+    }
+    // console.log(totalMoney);
+    // Create a new order
+    const order = new Order({
+      table: table._id,
+      cart: cart._id,
+      products: cart.items.map((item) => ({
+        product: item.product,
+        quantity: item.quantity,
+      })),
+      totalMoney: totalMoney,
+      status: "pending",
+    });
+
+    // Save the order to the database
     await order.save();
 
-    // update the table status to occupied
-    await Table.findByIdAndUpdate(table._id, { status: "occupied" });
+    // Empty the cart
+    cart.items = [];
+    await cart.save();
+
+    // Add the order to the table's orders array
+    table.orders.push(order._id);
+    await table.save();
+
     res.status(201).json({
-      order,
       success: true,
-      message: "Order created successfully",
+      data: order,
+      message: "Order placed successfully",
     });
   } catch (error) {
-    res.status(400).json({
-      error: error.message,
+    res.status(500).json({
       success: false,
-      message: "Something went wrong while creating the order",
+      error: error.message,
+      message: "Something went wrong while placing the order",
     });
   }
 };
 
-// @desc    Get a specific Order
-// @route   GET /orders/:id
+// @desc    Get all orders for specific table
+// @route   GET /:tableNumber
 // @access  Public
-const getOrder = async (req, res) => {
+const getOrders = async (req, res) => {
+  const tableNumber = req.params.tableNumber;
+
   try {
-    const order = await Order.findById(req.params.id);
+    // Find the table based on the provided table number
+    const table = await Table.findOne({ number: tableNumber });
+
+    if (!table) {
+      return res.status(404).json({
+        success: false,
+        message: "Table not found",
+      });
+    }
+
+    // Find the orders associated with the table
+    const orders = await Order.find({ table: table._id });
+
+    res.status(200).json({
+      success: true,
+      data: orders,
+      message: "Orders retrieved successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      message: "Something went wrong while retrieving orders",
+    });
+  }
+};
+
+// @desc    Get all orders for all tables
+// @route   GET /
+// @access  Public
+const getAllOrders = async (req, res) => {
+  try {
+    // Find all orders
+    const orders = await Order.find();
+
+    res.status(200).json({
+      success: true,
+      data: orders,
+      message: "Orders retrieved successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      message: "Something went wrong while retrieving orders",
+    });
+  }
+};
+
+// @desc    Update order status
+// @route   PUT /update-status/:orderId
+// @access  Public
+const updateOrderStatus = async (req, res) => {
+  const orderId = req.params.orderId;
+  const { status } = req.body;
+
+  try {
+    // Find the order by ID
+    const order = await Order.findById(orderId);
+
     if (!order) {
       return res.status(404).json({
         success: false,
         message: "Order not found",
       });
     }
+
+    // Update the order status
+    order.status = status;
+    await order.save();
+
     res.status(200).json({
-      data: order,
       success: true,
-      message: "Order fetched successfully",
+      data: order,
+      message: "Order status updated successfully",
     });
   } catch (error) {
     res.status(500).json({
-      error: error.message,
       success: false,
-      message: "Something went wrong while fetching the order",
+      error: error.message,
+      message: "Something went wrong while updating the order status",
     });
   }
 };
 
-// @desc    Update an order
-// @route   PUT /orders/:id
-// @access  Private
-const updateOrder = async (req, res) => {
-  try {
-    const order = await Order.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-    });
-    if (!order) {
-      return res.status(404).json({
-        success: false,
-        message: "Order not found",
-      });
-    }
-    res.status(200).json({
-      data: order,
-      success: true,
-      message: "Order updated successfully",
-    });
-  } catch (error) {
-    res.status(500).json({
-      error: error.message,
-      success: false,
-      message: "Something went wrong while updating the order",
-    });
-  }
-};
-
-// @desc    Delete an order
-// @route   DELETE /orders/:id
-// @access  Private
+// @desc    Delete order
+// @route   DELETE /delete-order/:orderId
+// @access  Public
 const deleteOrder = async (req, res) => {
+  const orderId = req.params.orderId;
+
   try {
-    const order = await Order.findByIdAndDelete(req.params.id);
+    // Find the order by ID and delete it
+    const order = await Order.findByIdAndDelete(orderId);
+
     if (!order) {
       return res.status(404).json({
         success: false,
         message: "Order not found",
       });
     }
+    // Remove the order from the table's orders array
+    const table = await Table.findById(order.table);
+    table.orders.pull(orderId);
+    await table.save();
+
     res.status(200).json({
-      data: order,
       success: true,
+      data: order,
       message: "Order deleted successfully",
     });
   } catch (error) {
     res.status(500).json({
-      error: error.message,
       success: false,
+      error: error.message,
       message: "Something went wrong while deleting the order",
     });
   }
 };
-
-export { getAllOrders, createOrder, getOrder, updateOrder, deleteOrder };
+export { placeOrder, getOrders, getAllOrders, updateOrderStatus, deleteOrder };

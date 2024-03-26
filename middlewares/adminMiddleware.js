@@ -43,4 +43,35 @@ const requireAdmin = async (req, res, next) => {
   }
 };
 
-export default requireAdmin;
+// Middleware to check token expiration
+const checkTokenExpiration = (req, res) => {
+  const token =
+    req.cookies.jwt ||
+    req.body.token ||
+    req.headers.authorization?.replace("Bearer ", "");
+  if (!token) {
+    return res
+      .status(401)
+      .json({ message: "Unauthorized - Missing token", expired: true });
+  }
+
+  try {
+    const decodedToken = jwt.verify(token, process.env.SECRET_KEY);
+    console.log(decodedToken);
+    if (decodedToken.exp < Date.now() / 1000) {
+      return res.status(401).json({
+        message: "Token Expired",
+        expired: true,
+        decodedToken,
+      });
+    }
+    return res
+      .status(200)
+      .json({ message: "Token is valid", expired: false, decodedToken });
+  } catch (error) {
+    // console.error("Error verifying token:", error);
+    return res.status(401).json({ message: "Token Expired", expired: true });
+  }
+};
+
+export { requireAdmin, checkTokenExpiration };

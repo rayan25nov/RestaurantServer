@@ -1,4 +1,9 @@
 import Product from "../models/productModel.js";
+import {
+  uploadImage,
+  deleteImage,
+  deleteImageByFile,
+} from "../middlewares/cloudinaryMiddleware.js";
 
 // @desc    Fetch all products
 // @route   GET /products
@@ -43,6 +48,33 @@ const getProduct = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Something went wrong while fetching the product",
+      error: error.message,
+    });
+  }
+};
+
+// @desc    Fetch special products
+// @route   GET /products/special
+// @access  Public
+const getSpecialProducts = async (req, res) => {
+  try {
+    const products = await Product.find({ special: true });
+    console.log(products);
+    if (!products || products.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No Special Products",
+      });
+    }
+    res.status(200).json({
+      success: true,
+      data: products,
+      message: "Special products fetched successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Something went wrong while fetching the special products",
       error: error.message,
     });
   }
@@ -95,12 +127,41 @@ const getProductsByType = async (req, res) => {
 // @access  Private
 const createProduct = async (req, res) => {
   try {
-    const product = new Product(req.body);
+    const {
+      category,
+      type,
+      caption,
+      description,
+      special,
+      price,
+      rating,
+      quantity,
+    } = req.body;
+    // Call the uploadImage middleware with async/await
+    await uploadImage(req, res);
+
+    // Check if the upload was successful
+    const uploadResult = res.locals.uploadResult;
+    const imageUrl = uploadResult.imageUrl;
+    console.log(imageUrl);
+
+    // Create a new product object with the uploaded image URL and other product details
+    const product = new Product({
+      category,
+      type,
+      image: imageUrl,
+      caption,
+      description,
+      special,
+      price,
+      rating,
+      quantity,
+    });
     await product.save();
     res.status(201).json({
       success: true,
-      data: product,
       message: "Product created successfully",
+      data: product,
     });
   } catch (error) {
     console.error(error);
@@ -117,19 +178,36 @@ const createProduct = async (req, res) => {
 // @access  Private
 const updateProduct = async (req, res) => {
   try {
-    const product = await Product.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true,
-    });
+    const product = await Product.findById(req.params.id);
     if (!product) {
       return res.status(404).json({
         success: false,
         message: "Product not found",
       });
     }
+    // Check if a new image file is provided in the request
+    const newImageFile = req.files?.image;
+    if (newImageFile) {
+      // Call the deleteImage middleware with async/await
+      await deleteImage(product.image);
+      // Call the uploadImage middleware with async/await
+      await uploadImage(req, res);
+      // Check if the upload was successful
+      const uploadResult = res.locals.uploadResult;
+      // Save the Cloudinary image URL to the updated product
+      req.body.image = uploadResult.imageUrl;
+    }
+    // Update the product with the new data
+    const updatedProductData = await Product.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      {
+        new: true,
+      }
+    );
     res.status(200).json({
       success: true,
-      data: product,
+      data: updatedProductData,
       message: "Product updated successfully",
     });
   } catch (error) {
@@ -147,13 +225,16 @@ const updateProduct = async (req, res) => {
 // @access  Private
 const deleteProduct = async (req, res) => {
   try {
-    const product = await Product.findByIdAndDelete(req.params.id);
+    const product = await Product.findById(req.params.id);
     if (!product) {
       return res.status(404).json({
         success: false,
         message: "Product not found",
       });
     }
+    // Call the deleteImage middleware with async/await
+    await deleteImage(product.image);
+    await product.deleteOne();
     res.status(200).json({
       success: true,
       message: "Product deleted successfully",
@@ -171,6 +252,7 @@ const deleteProduct = async (req, res) => {
 export {
   getAllProducts,
   getProduct,
+  getSpecialProducts,
   getProductsByCategory,
   getProductsByType,
   createProduct,

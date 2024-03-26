@@ -9,9 +9,9 @@ const productSchema = new mongoose.Schema({
   type: {
     type: String,
     required: true,
-    enum: ["veg", "nonVeg"],
+    enum: ["veg", "non veg"],
   },
-  img: {
+  image: {
     type: String,
     required: true,
   },
@@ -22,6 +22,10 @@ const productSchema = new mongoose.Schema({
   description: {
     type: String,
     required: true,
+  },
+  special: {
+    type: Boolean,
+    default: false,
   },
   price: {
     type: Number,

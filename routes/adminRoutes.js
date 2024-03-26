@@ -10,7 +10,7 @@ import {
   deleteAdminProfile,
 } from "../controllers/admin.js";
 
-import requireAdmin from "../middlewares/adminMiddleware.js";
+import { requireAdmin } from "../middlewares/adminMiddleware.js";
 
 router.post("/register", registerAdmin);
 router.post("/login", loginAdmin);

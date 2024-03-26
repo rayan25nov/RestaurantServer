@@ -69,17 +69,25 @@ const loginAdmin = async (req, res) => {
       });
     }
     // Generate JWT token
-    const token = jwt.sign({ userId: admin._id }, process.env.SECRET_KEY, {
-      expiresIn: "1h", // Adjust the expiration time as needed
-    });
+    const token = jwt.sign(
+      { userId: admin._id, role: "admin" },
+      process.env.SECRET_KEY,
+      {
+        expiresIn: "1h", // Adjust the expiration time as needed
+      }
+    );
 
     res
-      .cookie("jwt", token, { httpOnly: true, maxAge: 60 * 60 * 1000 })
+      .cookie("jwt", token, {
+        httpOnly: true,
+        maxAge: 60 * 60 * 1000,
+      })
       .status(200)
       .json({
         success: true,
         message: "Admin logged in successfully",
         data: admin,
+        token,
       });
   } catch (error) {
     res.status(400).json({

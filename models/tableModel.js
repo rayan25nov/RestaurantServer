@@ -8,7 +8,7 @@ const tableSchema = new mongoose.Schema({
   status: {
     type: String,
     required: true,
-    enum: ["free", "occupied", "reserved"],
+    enum: ["free", "reserved"],
   },
   orders: [
     {
@@ -16,6 +16,10 @@ const tableSchema = new mongoose.Schema({
       ref: "Order",
     },
   ],
+  cart: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Cart",
+  },
   qrCode: {
     type: String,
     unique: true,

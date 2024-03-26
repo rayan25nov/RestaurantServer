@@ -1,0 +1,106 @@
+[
+  {
+    "category": "mainDish",
+    "type": "veg",
+    "image": "https://res.cloudinary.com/dex9pejve/image/upload/v1697350667/images/kadhai_paneer_jvptug.jpg",
+    "caption": "Kadhai Paneer - A Flavorful Delight!",
+    "description": "Indulge in the rich and aromatic flavors of this exquisite Indian vegetarian masterpiece, where succulent cubes of paneer (cottage cheese) are skillfully prepared with an array of fragrant spices in a time-honored traditional wok. Immerse your senses in the symphony of spices as they dance together, creating a harmonious blend that elevates the taste of this culinary delight. Each bite is a journey through the vibrant tapestry of Indian cuisine, showcasing the perfect balance of textures and flavors that make this dish an absolute sensory delight.",
+    "price": 250,
+    "rating": 4.1,
+    "quantity": 1
+  },
+   {
+    "category": "mainDish",
+    "type": "veg",
+    "image": "https://res.cloudinary.com/dex9pejve/image/upload/v1697350669/images/pizza_xmudbt.jpg",
+    "caption": "Pizza - A Perfect Fusion of Flavors and Happiness!",
+    "description": "Savor the timeless allure of a classic favorite - a pizza that tantalizes the taste buds with its crispy crust, adorned with a luscious layer of savory tomato sauce. Revel in the joy of gooey, melted cheese generously blanketing the surface, creating a perfect harmony of textures and flavors. What sets this pizza apart is the delightful medley of delectable toppings that elevate it to culinary perfection. Whether adorned with succulent meats, fresh vegetables, or a combination of both, each bite is a symphony of taste that captures the essence of this beloved dish.",
+    "price": 150,
+    "rating": 4.0,
+    "quantity": 1
+  },
+  {
+    "category": "mainDish",
+    "type": "non veg",
+    "image": "https://res.cloudinary.com/dex9pejve/image/upload/v1697350663/images/chicken_tikka_dthiwe.jpg",
+    "caption": "Chicken Tikka - A Spicy Grilled Delight!",
+    "description": "Delight your palate with the exquisite taste of succulent chicken pieces, meticulously marinated in a harmonious blend of aromatic spices and creamy yogurt. Expertly grilled to perfection, each mouthwatering morsel promises a symphony of flavors that captivates the senses. The infusion of spices, combined with the tenderizing effect of yogurt, creates a tantalizing marinade that imparts depth and richness to the chicken. As the grill works its magic, the result is a culinary masterpiece - a burst of flavors that dance on your taste buds, offering a perfect balance of smokiness, spice, and juiciness.",
+    "price": 200,
+    "rating": 4.5,
+    "quantity": 1
+  },
+ {
+    "category": "mainDish",
+    "type": "non veg",
+    "image": "https://res.cloudinary.com/dex9pejve/image/upload/v1697350664/images/biryani_nsxkvh.jpg",
+    "caption": "Biryani - A Flavorful Rice Delicacy!",
+    "description": "Immerse yourself in the indulgent experience of a fragrant and flavorful rice dish, where layers of tender meat, aromatic spices, and caramelized onions come together in perfect harmony. Each spoonful unveils a symphony of tastes and textures, creating a culinary masterpiece that's a delight to the senses. The rice, infused with the aromatic spices, forms a canvas for the succulent tender meat to shine. As you delve into the layers, the caramelized onions add a touch of sweetness and depth, enhancing the overall flavor profile.",
+    "price": 100,
+    "rating": 4.6,
+    "quantity": 1
+  },
+  {
+    "category": "mainDish",
+    "type": "non veg",
+    "image": "https://res.cloudinary.com/dex9pejve/image/upload/v1697350663/images/bbq_goe6yx.jpg",
+    "caption": "Smoky BBQ Delights",
+    "description": "Indulge your senses in the enticing allure of rich, smoky flavors that emanate from perfectly grilled barbecue dishes. Each bite is a symphony of charred perfection, delivering a culinary experience that transcends the ordinary. The grilling process imparts a unique smokiness to the dishes, enhancing their depth and creating a tantalizing complexity of taste. Whether it's succulent meats, vibrant vegetables, or a combination of both, the grill marks the beginning of a gastronomic journey that promises satisfaction with every mouthful.",
+    "price": 320,
+    "rating": 4.2,
+    "quantity": 1
+  },
+  {
+    image: friedFish,
+    caption: "Crispy Fried Fish",
+    description:
+      "Enjoy tender and flaky fish, coated in a crispy, golden-brown batter.",
+    price: "120",
+    rating: "4.5",
+    quantity: 1,
+  },
+  {
+    image: friedRice,
+    caption: "Flavorful Fried Rice Dishes",
+    description:
+      "Satisfy your cravings with aromatic fried rice, bursting with savory ingredients and spices.",
+    price: "120",
+    rating: "4.6",
+    quantity: 1,
+  },
+  {
+    image: noodles,
+    caption: "Noodle Extravaganza",
+    description:
+      "Experience the world of noodles, from slurp-worthy ramen to stir-fried classics.",
+    price: "65",
+    rating: "4.4",
+    quantity: 1,
+  },
+  {
+    image: pancakes,
+    caption: "Fluffy and Delicious Pancakes!",
+    description:
+      "Start your day with fluffy pancakes, drizzled with syrup and topped with your favorite extras.",
+    price: "70",
+    rating: "4.8",
+    quantity: 1,
+  },
+  {
+    image: burgers,
+    caption: "Irresistible Burger Creations",
+    description:
+      "Sink your teeth into juicy, mouthwatering burgers with a variety of toppings and flavors.",
+    price: "60",
+    rating: "4.4",
+    quantity: 1,
+  },
+  {
+    image: iceCream,
+    caption: "Ice Cream Sundae - A Classic Summer Treat!",
+    description:
+      "A bowl of ice cream topped with whipped cream, chocolate sauce, and a variety of toppings, such as nuts, sprinkles, and maraschino cherries",
+    price: "50",
+    rating: "4.8",
+    quantity: 1,
+  },
+];
