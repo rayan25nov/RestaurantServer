@@ -15,7 +15,7 @@ const staffSchema = new mongoose.Schema({
   },
   accessLevel: {
     type: String,
-    enum: ["accountant", "chef", "waiter", "staff"],
+    enum: ["accountant", "chef", "waiter"],
     required: true,
   },
   email: {

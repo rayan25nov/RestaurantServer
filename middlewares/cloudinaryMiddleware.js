@@ -28,7 +28,7 @@ const uploadImage = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: "Internal server error",
+      error: "Something went wrong while uploading image to cloudinary",
       message: error.message,
     });
   }
@@ -45,21 +45,10 @@ const deleteImage = async (imageUrl) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: "Internal server error",
+      error: "Something went wrong while deleting image from cloudinary",
       message: error.message,
     });
   }
 };
 
-const deleteImageByFile = async (file) => {
-  try {
-    // Delete the image from Cloudinary
-    const result = await cloudinary.uploader.destroy(file.public_id);
-    console.log(result);
-  } catch (error) {
-    console.error(error);
-    throw new Error("Failed to delete image");
-  }
-};
-
-export { uploadImage, deleteImage, deleteImageByFile };
+export { uploadImage, deleteImage };

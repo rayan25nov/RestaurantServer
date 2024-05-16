@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import Admin from "../models/adminModel.js";
+import Staff from "../models/staffModel.js";
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -10,7 +11,6 @@ const requireAdmin = async (req, res, next) => {
     req.cookies.jwt ||
     req.body.token ||
     req.headers.authorization.replace("Bearer ", "");
-
   if (!token) {
     return res.status(401).json({ message: "Unauthorized - Missing token" });
   }
@@ -42,6 +42,68 @@ const requireAdmin = async (req, res, next) => {
     });
   }
 };
+// middleware to check if user is an user
+const requireAuth = async (req, res, next) => {
+  try {
+    // console.log(req.headers);
+    const token =
+      req.cookies.jwt ||
+      req.body.token ||
+      req.headers.authorization.replace("Bearer ", "");
+    // console.log(token);
+
+    if (!token) {
+      return res
+        .status(401)
+        .json({ message: "No token in cookie", success: false });
+    }
+    const decode = jwt.verify(token, process.env.SECRET_KEY);
+    // console.log(decode);
+    req.user = decode;
+
+    next();
+  } catch (error) {
+    // console.log(error);
+    return res.status(401).json({
+      error: error.message,
+      message: "Something went wrong during decoding token of an user",
+      success: false,
+    });
+  }
+};
+// middleware to check if user is a Chef
+const requireChef = async (req, res, next) => {
+  try {
+    const token =
+      req.cookies.jwt ||
+      req.body.token ||
+      req.headers.authorization.replace("Bearer ", "");
+    const decode = jwt.verify(token, process.env.SECRET_KEY);
+    // console.log(decode);
+    // Check if the user has the chef or waiter role
+    const user = await Staff.findOne({ _id: decode.userId });
+
+    if (
+      !user ||
+      (user.accessLevel !== "chef" && user.accessLevel !== "waiter")
+    ) {
+      return res
+        .status(403)
+        .json({ message: "Forbidden - Staff access required", success: false });
+    }
+
+    // Attach the user to the request object for further use
+    req.user = user;
+    next();
+  } catch (error) {
+    return res.status(401).json({
+      error: error.message,
+      message: "Something went wrong during decoding token of a chef",
+      success: false,
+    });
+  }
+};
+
 
 // Middleware to check token expiration
 const checkTokenExpiration = (req, res) => {
@@ -74,4 +136,4 @@ const checkTokenExpiration = (req, res) => {
   }
 };
 
-export { requireAdmin, checkTokenExpiration };
+export { requireAdmin, checkTokenExpiration, requireAuth, requireChef };

@@ -16,11 +16,14 @@ cloudinaryConnect();
 
 // Define routes
 import orderRoutes from "./routes/orderRoutes.js";
+import oldOrderRoutes from "./routes/oldOrderRoutes.js";
 import cartRoutes from "./routes/cartRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
-import tableRoutes from "./routes/tableRoutes.js";
 import staffRoutes from "./routes/staffRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
+import paymentRoutes from "./routes/paymentRoutes.js";
+import feedbackRoutes from "./routes/feedbackRoutes.js";
 
 app.get("/", (req, res) => {
   res.send("Hello World!");
@@ -44,10 +47,14 @@ app.use(
 // routes
 app.use("/admin", adminRoutes);
 app.use("/products", productRoutes);
-app.use("/tables", tableRoutes);
 app.use("/cart", cartRoutes);
 app.use("/orders", orderRoutes);
+app.use("/old-orders", oldOrderRoutes);
 app.use("/staffs", staffRoutes);
+app.use("/users", userRoutes);
+app.use("/payments", paymentRoutes);
+app.use("/feedbacks", feedbackRoutes);
+
 // Check token
 import { checkTokenExpiration } from "./middlewares/adminMiddleware.js";
 app.use("/checkTokenExpiration", checkTokenExpiration);

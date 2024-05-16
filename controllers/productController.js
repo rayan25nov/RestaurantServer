@@ -2,7 +2,6 @@ import Product from "../models/productModel.js";
 import {
   uploadImage,
   deleteImage,
-  deleteImageByFile,
 } from "../middlewares/cloudinaryMiddleware.js";
 
 // @desc    Fetch all products

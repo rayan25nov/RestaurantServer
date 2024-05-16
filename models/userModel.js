@@ -31,7 +31,17 @@ const userSchema = mongoose.Schema(
     },
     image: {
       type: String,
-    }
+    },
+    orders: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Order",
+      },
+    ],
+    cart: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Cart",
+    },
   },
   {
     timestamps: true,

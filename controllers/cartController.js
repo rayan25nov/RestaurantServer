@@ -1,291 +1,171 @@
 import Cart from "../models/cartModel.js";
-import Table from "../models/tableModel.js";
-import Product from "../models/productModel.js";
 
-// @desc    Fetch all carts items related to specific table
-// @route   GET /:tableNumber
-// @access  Public
-
+// @desc    Get all cart items for specific user
+// @route   GET /
+// @access  Private
 const getAllCartItems = async (req, res) => {
-  const tableNumber = req.params.tableNumber;
-
   try {
-    // Find the table based on the provided table number
-    const table = await Table.findOne({ number: tableNumber });
-
-    if (!table) {
-      return res.status(404).json({
-        success: false,
-        message: "Table not found",
-      });
-    }
-
-    // Find the cart associated with the table
-    const cart = await Cart.findById(table.cart);
+    const cart = await Cart.findOne({ user: req.user.id }).populate(
+      "items.product"
+    );
 
     if (!cart) {
       return res.status(404).json({
+        message: "No Items found in the Cart.",
         success: false,
-        message: "Cart not found",
+        data: [],
+        length: 0,
       });
     }
 
-    // Find the product details for each item in the cart
-    const productIds = cart.items.map((item) => item.product);
-    const products = await Product.find({ _id: { $in: productIds } });
-
-    // Combine product details with quantity from the cart
-    const cartItems = cart.items.map((item) => ({
-      product: products.find((product) => product._id.equals(item.product)),
-      quantity: item.quantity,
-    }));
-
     res.status(200).json({
+      data: cart.items,
+      length: cart.items.length,
       success: true,
-      data: cartItems,
       message: "Cart items fetched successfully",
     });
   } catch (error) {
+    console.error(error);
     res.status(500).json({
+      message: "Something went wrong while fetching all cart items",
       success: false,
-      error: error.message,
-      message: "Something went wrong while fetching cart items",
     });
   }
 };
 
-// @desc    Add product to the cart of a specific table
-// @route   POST /addToCart/:tableNumber
-// @access  Public
+// @desc    Add item to cart
+// @route   POST /add
+// @access  Private
+
 const addItemToCart = async (req, res) => {
-  const { productId, quantity } = req.body;
-  const tableNumber = req.params.tableNumber;
-
   try {
-    // Find the table based on the provided table number
-    const table = await Table.findOne({ number: tableNumber });
-
-    if (!table) {
-      return res.status(404).json({
-        success: false,
-        message: "Table not found",
-      });
-    }
-
-    // Find or create a cart associated with the table
-    let cart = await Cart.findOne({ _id: table.cart });
+    const { productId, quantity } = req.body;
+    let cart = await Cart.findOne({ user: req.user.id });
 
     if (!cart) {
-      cart = new Cart();
-      await cart.save();
-      table.cart = cart._id;
-      await table.save();
+      cart = new Cart({ user: req.user.id, items: [] });
     }
 
-    // Find the product based on the provided product ID
-    const product = await Product.findById(productId);
-
-    if (!product) {
-      return res.status(404).json({
-        success: false,
-        message: "Product not found",
-      });
-    }
-
-    // If the same product is already in the cart, update its quantity inside the product
-    const existingItem = cart.items.find(
-      (item) => item.product.toString() === product._id.toString()
-    );
-    if (existingItem) {
-      existingItem.quantity += quantity || 1;
-      await cart.save();
-      return res.status(200).json({
-        success: true,
-        data: cart,
-        message: "Product quantity updated successfully",
-      });
-    }
-
-    // Add the product to the cart
-    cart.items.push({
-      product: product._id,
-      quantity: quantity || 1,
-    });
-
-    await cart.save();
-
-    res.status(201).json({
-      success: true,
-      data: cart,
-      message: "Product added to the cart successfully",
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: error.message,
-      message: "Something went wrong while adding product to the cart",
-    });
-  }
-};
-
-// @desc    Update product quantity in the cart of a specific table
-// @route   PUT /updateCart/:tableNumber
-// @access  Public
-const updateCartItemQuantity = async (req, res) => {
-  const { productId, quantity } = req.body;
-  const tableNumber = req.params.tableNumber;
-
-  try {
-    // Find the table based on the provided table number
-    const table = await Table.findOne({ number: tableNumber });
-
-    if (!table) {
-      return res.status(404).json({
-        success: false,
-        message: "Table not found",
-      });
-    }
-
-    // Find the cart associated with the table
-    const cart = await Cart.findOne({ _id: table.cart });
-
-    if (!cart) {
-      return res.status(404).json({
-        success: false,
-        message: "Cart not found",
-      });
-    }
-
-    // Find the product based on the provided product ID
-    const product = await Product.findById(productId);
-
-    if (!product) {
-      return res.status(404).json({
-        success: false,
-        message: "Product not found",
-      });
-    }
-    // Update the quantity of the product in the cart
-    const item = cart.items.find(
-      (item) => item.product.toString() === product._id.toString()
-    );
+    const item = cart.items.find((item) => item.product == productId);
     if (item) {
       item.quantity += quantity;
-      await cart.save();
-      res.status(200).json({
-        success: true,
-        data: cart,
-        message: "Product quantity updated successfully",
-      });
+    } else {
+      cart.items.push({ product: productId, quantity });
     }
+
+    await cart.save();
+    res.json({
+      data: cart.items,
+      length: cart.items.length,
+      success: true,
+      message: "Items added successfully",
+    });
   } catch (error) {
     res.status(500).json({
-      success: false,
       error: error.message,
-      message:
-        "Something went wrong while updating product quantity in the cart",
+      success: false,
+      message: "Error adding item to cart",
     });
   }
 };
 
-// @desc    Remove product from the cart of a specific table
-// @route   DELETE /removeFromCart/:tableNumber/:productId
-// @access  Public
-const removeItemFromCart = async (req, res) => {
-  // const { productId } = req.body;
-  const productId = req.params.productId;
-  console.log(productId);
-  const tableNumber = req.params.tableNumber;
-
+// @desc    Update cart item quantity
+// @route   PUT /update/:productId
+// @access  Private
+const updateCartItemQuantity = async (req, res) => {
   try {
-    // Find the table based on the provided table number
-    const table = await Table.findOne({ number: tableNumber });
+    const { quantity } = req.body;
+    const cart = await Cart.findOne({ user: req.user.id });
+    const item = cart.items.find(
+      (item) => item.product == req.params.productId
+    );
+    if (!item) {
+      return res
+        .status(404)
+        .json({ message: "Item not found in cart", success: false });
+    }
+    item.quantity += quantity;
+    // if items quantity becomes 0 remove items from the cart
+    if (item.quantity <= 0) {
+      cart.items = cart.items.filter(
+        (item) => item.product != req.params.productId
+      );
+    }
+    await cart.save();
+    res.status(200).json({
+      data: cart.items,
+      length: cart.items.length,
+      updated: item, // updated item with new quantity value
+      success: true,
+      message: "Quantity updated successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: error.message,
+      success: false,
+      message: "Error while updating quantity",
+    });
+  }
+};
 
-    if (!table) {
-      return res.status(404).json({
-        success: false,
-        message: "Table not found",
-      });
+// @desc    Remove item from cart
+// @route   DELETE /cart/:productId
+// @access  Private
+const removeItemFromCart = async (req, res) => {
+  try {
+    const cart = await Cart.findOne({ user: req.user.id });
+    const item = cart.items.find(
+      (item) => item.product == req.params.productId
+    );
+    if (!item) {
+      return res
+        .status(404)
+        .json({ message: "Item not found in cart", success: false });
     }
 
-    // Find the cart associated with the table
-    const cart = await Cart.findOne({ _id: table.cart });
-
-    if (!cart) {
-      return res.status(404).json({
-        success: false,
-        message: "Cart not found",
-      });
-    }
-
-    // Find the product based on the provided product ID
-    const product = await Product.findById(productId);
-
-    if (!product) {
-      return res.status(404).json({
-        success: false,
-        message: "Product not found",
-      });
-    }
-    // Remove the product from the cart
     cart.items = cart.items.filter(
-      (item) => item.product.toString() !== product._id.toString()
+      (item) => item.product != req.params.productId
     );
     await cart.save();
     res.status(200).json({
+      data: cart.items,
+      length: cart.items.length,
+      updated: item, // updated item with new quantity value
       success: true,
-      data: cart,
-      message: "Product removed from the cart successfully",
+      message: "Item removed from cart",
     });
   } catch (error) {
     res.status(500).json({
-      success: false,
       error: error.message,
-      message: "Something went wrong while removing product from the cart",
+      success: false,
+      message: "Error removing item from cart",
     });
   }
 };
 
-// @desc    Clear the cart of a specific table
-// @route   DELETE /clearCart/:tableNumber
-// @access  Public
+// @desc    Clear cart
+// @route   DELETE /cart
+// @access  Private
 const clearCart = async (req, res) => {
-  const tableNumber = req.params.tableNumber;
-
   try {
-    // Find the table based on the provided table number
-    const table = await Table.findOne({ number: tableNumber });
-
-    if (!table) {
-      return res.status(404).json({
-        success: false,
-        message: "Table not found",
-      });
-    }
-
-    // Find the cart associated with the table
-    const cart = await Cart.findOne({ _id: table.cart });
-
-    if (!cart) {
-      return res.status(404).json({
-        success: false,
-        message: "Cart not found",
-      });
-    }
-
-    // Clear the cart
+    const cart = await Cart.findOne({ user: req.user.id }).populate(
+      "items.product"
+    );
+    const removed = cart.items.map((item) => item.product);
     cart.items = [];
     await cart.save();
     res.status(200).json({
+      data: [],
+      length: 0,
+      removed: removed,
       success: true,
-      data: cart,
-      message: "Cart cleared successfully",
+      message: "Cart cleared",
     });
   } catch (error) {
     res.status(500).json({
-      success: false,
       error: error.message,
-      message: "Something went wrong while clearing the cart",
+      success: false,
+      message: "Error clearing cart",
     });
   }
 };
@@ -293,7 +173,7 @@ const clearCart = async (req, res) => {
 export {
   getAllCartItems,
   addItemToCart,
+  updateCartItemQuantity,
   removeItemFromCart,
   clearCart,
-  updateCartItemQuantity,
 };

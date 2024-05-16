@@ -13,22 +13,12 @@ const orderItemSchema = new mongoose.Schema({
   },
 });
 
-const orderSchema = new mongoose.Schema({
+const oldOrderSchema = new mongoose.Schema({
   products: [orderItemSchema],
   totalMoney: {
     type: Number,
     required: true,
     default: 0,
-  },
-  status: {
-    type: String,
-    enum: ["Pending", "Started", "Ready", "Delivered"],
-    default: "Pending",
-  },
-  paymentStatus: {
-    type: String,
-    enum: ["Paid", "Not Paid"],
-    default: "Not Paid",
   },
   user: {
     type: mongoose.Schema.Types.ObjectId,
@@ -36,6 +26,6 @@ const orderSchema = new mongoose.Schema({
   },
 });
 
-const Order = mongoose.model("Order", orderSchema);
+const Order = mongoose.model("OldOrder", oldOrderSchema);
 
 export default Order;

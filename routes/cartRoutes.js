@@ -9,10 +9,13 @@ import {
   clearCart,
 } from "../controllers/cartController.js";
 
-router.get("/:tableNumber", getAllCartItems);
-router.post("/addToCart/:tableNumber", addItemToCart);
-router.put("/updateCart/:tableNumber", updateCartItemQuantity);
-router.delete("/removeFromCart/:tableNumber/:productId", removeItemFromCart);
-router.delete("/clearCart/:tableNumber", clearCart);
+// middleware
+import { requireAuth } from "../middlewares/adminMiddleware.js";
+
+router.get("/", requireAuth, getAllCartItems);
+router.post("/add", requireAuth, addItemToCart);
+router.put("/update/:productId", requireAuth, updateCartItemQuantity);
+router.delete("/remove/:productId", requireAuth, removeItemFromCart);
+router.delete("/clear", requireAuth, clearCart);
 
 export default router;

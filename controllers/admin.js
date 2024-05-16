@@ -1,4 +1,6 @@
 import Admin from "../models/adminModel.js";
+import Token from "../models/tokenModel.js";
+import mailSender from "../utils/mailSender.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
@@ -8,11 +10,11 @@ dotenv.config();
 // @route   POST /admin
 // @access  Public
 const registerAdmin = async (req, res) => {
-  const { username, password } = req.body;
+  const { name, username, password } = req.body;
 
   try {
     // Check if an admin already exists
-    const existingAdmin = await Admin.findOne({ role: "admin" });
+    const existingAdmin = await Admin.findOne({ username });
 
     if (existingAdmin) {
       return res.status(400).json({
@@ -25,17 +27,34 @@ const registerAdmin = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const newAdmin = new Admin({
+      name,
       username,
       password: hashedPassword,
     });
 
     await newAdmin.save();
 
-    res.status(201).json({
-      success: true,
-      message: "Admin registered successfully",
-      data: newAdmin,
-    });
+    // Generate JWT token
+    const token = jwt.sign(
+      { userId: newAdmin._id, role: "admin" },
+      process.env.SECRET_KEY,
+      {
+        expiresIn: "1h",
+      }
+    );
+
+    res
+      .cookie("jwt", token, {
+        httpOnly: true,
+        maxAge: 60 * 60 * 1000,
+      })
+      .status(200)
+      .json({
+        success: true,
+        message: "Admin registered successfully",
+        data: newAdmin,
+        token,
+      });
   } catch (error) {
     res.status(400).json({
       success: false,
@@ -181,6 +200,111 @@ const deleteAdminProfile = async (req, res) => {
   }
 };
 
+// @desc      Forgot password
+// @route     POST /admin/forgot-password
+// @access    Public  // VERIFIED
+const forgotPassword = async (req, res) => {
+  const { email } = req.body;
+
+  try {
+    // Find the user by email
+    const admin = await Admin.findOne({ email });
+
+    if (!admin) {
+      return res.status(404).json({
+        message: "Admin not found",
+        success: false,
+      });
+    }
+    // Check if a reset token already exists for the user
+    const existingToken = await Token.findOne({ userId: admin._id });
+
+    if (existingToken) {
+      return res.status(409).json({
+        message: "An Email is Already been sent to reset the password",
+        success: false,
+      });
+    }
+    // Generate a reset token
+    const resetToken = jwt.sign({ userId: user._id }, process.env.SECRET_KEY, {
+      expiresIn: "1h",
+    });
+
+    // Save the reset token to the database
+    const token = new Token({
+      userId: user._id,
+      token: resetToken,
+    });
+    await token.save();
+
+    const url = `${process.env.BASE_URL}admin/${admin.id}/reset-password/${token.token}`;
+    await mailSender(
+      admin.email,
+      "Reset Password",
+      "Please click the button below to Reset Password.",
+      url
+    );
+    // Send the reset token to the user's email
+    res.status(200).json({
+      message: "Reset token sent to email",
+      success: true,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Something went wrong while sending email to reset password",
+      error: error.message,
+      success: false,
+    });
+  }
+};
+
+//  @desc      Reset password
+// @route     POST /admin/:id/reset-password/:token
+// @access    Public  // VERIFIED
+const resetPassword = async (req, res) => {
+  const { password } = req.body;
+  const { id, token } = req.params;
+
+  try {
+    // Find the user by ID
+    const user = await Admin.findById(id);
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+        success: false,
+      });
+    }
+    // Find the token by token
+    const tokenDoc = await Token.findOne({ token });
+    if (!tokenDoc) {
+      return res.status(404).json({
+        message: "Token not found",
+        success: false,
+      });
+    }
+    // Hash the new password
+    const hashedPassword = await bcrypt.hash(password, 10);
+    // Update the user's password
+    user.password = hashedPassword;
+    await user.save();
+    // Delete the token
+    await tokenDoc.delete();
+    // Send a success response
+    res.status(200).json({
+      message: "Password reset successfully",
+      success: true,
+    });
+  } catch (error) {
+    // Send an error response
+    res.status(500).json({
+      message: "Something went wrong while resetting password",
+      error: error.message,
+      success: false,
+    });
+  }
+};
+
 export {
   registerAdmin,
   loginAdmin,
@@ -188,4 +312,6 @@ export {
   getAdminProfile,
   updateAdminProfile,
   deleteAdminProfile,
+  forgotPassword,
+  resetPassword,
 };

@@ -1,27 +1,14 @@
 import Order from "../models/orderModel.js";
-import Table from "../models/tableModel.js";
 import Cart from "../models/cartModel.js";
 import Product from "../models/productModel.js";
 
 // @desc    Place an order from the cart
-// @route   POST /place-order/:tableNumber
-// @access  Public
+// @route   POST /orders
+// @access  Private
 const placeOrder = async (req, res) => {
-  const tableNumber = req.params.tableNumber;
-
   try {
-    // Find the table based on the provided table number
-    const table = await Table.findOne({ number: tableNumber, status: "free" });
-
-    if (!table) {
-      return res.status(404).json({
-        success: false,
-        message: "Table not found",
-      });
-    }
-
-    // Find the cart associated with the table
-    const cart = await Cart.findById(table.cart);
+    const { total: totalMoney } = req.body;
+    const cart = await Cart.findOne({ user: req.user.id });
 
     if (!cart) {
       return res.status(404).json({
@@ -39,23 +26,15 @@ const placeOrder = async (req, res) => {
       });
     }
 
-    // Calculate the total money based on the items in the cart
-    let totalMoney = 0;
-    for (const item of cart.items) {
-      const product = await Product.findById(item.product);
-      totalMoney += product.price * item.quantity;
-    }
-    // console.log(totalMoney);
     // Create a new order
     const order = new Order({
-      table: table._id,
-      cart: cart._id,
       products: cart.items.map((item) => ({
         product: item.product,
         quantity: item.quantity,
       })),
       totalMoney: totalMoney,
-      status: "pending",
+      status: "Pending",
+      user: req.user.id,
     });
 
     // Save the order to the database
@@ -64,10 +43,6 @@ const placeOrder = async (req, res) => {
     // Empty the cart
     cart.items = [];
     await cart.save();
-
-    // Add the order to the table's orders array
-    table.orders.push(order._id);
-    await table.save();
 
     res.status(201).json({
       success: true,
@@ -83,26 +58,23 @@ const placeOrder = async (req, res) => {
   }
 };
 
-// @desc    Get all orders for specific table
-// @route   GET /:tableNumber
+// @desc    Get all orders for specific user
+// @route   GET /orders
 // @access  Public
 const getOrders = async (req, res) => {
-  const tableNumber = req.params.tableNumber;
-
   try {
-    // Find the table based on the provided table number
-    const table = await Table.findOne({ number: tableNumber });
-
-    if (!table) {
+    // Find the orders associated with the user and also populate the product associated with it
+    const orders = await Order.find({ user: req.user.id }).populate(
+      "products.product"
+    );
+    if (!orders) {
       return res.status(404).json({
         success: false,
-        message: "Table not found",
+        message: "you haven't ordered anything yet",
       });
     }
 
-    // Find the orders associated with the table
-    const orders = await Order.find({ table: table._id });
-
+    // Return the orders for the user
     res.status(200).json({
       success: true,
       data: orders,
@@ -117,9 +89,9 @@ const getOrders = async (req, res) => {
   }
 };
 
-// @desc    Get all orders for all tables
-// @route   GET /
-// @access  Public
+// @desc    Get all orders for admin
+// @route   GET /orders/all-orders
+// @access  Private
 const getAllOrders = async (req, res) => {
   try {
     // Find all orders
@@ -140,7 +112,7 @@ const getAllOrders = async (req, res) => {
 };
 
 // @desc    Update order status
-// @route   PUT /update-status/:orderId
+// @route   PUT orders/:orderId
 // @access  Public
 const updateOrderStatus = async (req, res) => {
   const orderId = req.params.orderId;
@@ -175,8 +147,44 @@ const updateOrderStatus = async (req, res) => {
   }
 };
 
-// @desc    Delete order
-// @route   DELETE /delete-order/:orderId
+// @desc    Update payment status
+// @route   PUT orders/payment/:orderId
+// @access  Public
+const updatePaymentStatus = async (req, res) => {
+  const orderId = req.params.orderId;
+  const { status } = req.body;
+
+  try {
+    // Find the order by ID
+    const order = await Order.findById(orderId);
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found",
+      });
+    }
+
+    // Update the payment status
+    order.paymentStatus = status;
+    await order.save();
+
+    res.status(200).json({
+      success: true,
+      data: order,
+      message: "Payment status updated successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      message: "Something went wrong while updating the payment status",
+    });
+  }
+};
+
+// @desc    Delete an order
+// @route   DELETE /orders/:orderId
 // @access  Public
 const deleteOrder = async (req, res) => {
   const orderId = req.params.orderId;
@@ -191,10 +199,6 @@ const deleteOrder = async (req, res) => {
         message: "Order not found",
       });
     }
-    // Remove the order from the table's orders array
-    const table = await Table.findById(order.table);
-    table.orders.pull(orderId);
-    await table.save();
 
     res.status(200).json({
       success: true,
@@ -209,4 +213,11 @@ const deleteOrder = async (req, res) => {
     });
   }
 };
-export { placeOrder, getOrders, getAllOrders, updateOrderStatus, deleteOrder };
+export {
+  placeOrder,
+  getOrders,
+  getAllOrders,
+  updateOrderStatus,
+  updatePaymentStatus,
+  deleteOrder,
+};

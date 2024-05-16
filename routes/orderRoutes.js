@@ -2,17 +2,25 @@ import express from "express";
 const router = express.Router();
 
 import {
+  placeOrder,
   getAllOrders,
   getOrders,
-  placeOrder,
   updateOrderStatus,
+  updatePaymentStatus,
   deleteOrder,
 } from "../controllers/orderController.js";
 
-router.get("/", getAllOrders);
-router.get("/:tableNumber", getOrders);
-router.post("/place-order/:tableNumber", placeOrder);
-router.put("/update-status/:orderId", updateOrderStatus);
-router.delete("/delete-order/:orderId", deleteOrder);
+// middleware
+import {
+  requireAuth,
+  requireChef,
+} from "../middlewares/adminMiddleware.js";
+
+router.post("/", requireAuth, placeOrder);
+router.get("/", requireAuth, getOrders);
+router.get("/all-orders", getAllOrders);
+router.put("/:orderId", requireChef, updateOrderStatus);
+router.put("/payment/:orderId", requireAuth, updatePaymentStatus);
+router.delete("/:orderId", requireAuth, deleteOrder);
 
 export default router;

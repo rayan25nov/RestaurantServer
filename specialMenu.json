@@ -9,7 +9,7 @@
     "rating": 4.1,
     "quantity": 1
   },
-   {
+  {
     "category": "mainDish",
     "type": "veg",
     "image": "https://res.cloudinary.com/dex9pejve/image/upload/v1697350669/images/pizza_xmudbt.jpg",
@@ -29,7 +29,7 @@
     "rating": 4.5,
     "quantity": 1
   },
- {
+  {
     "category": "mainDish",
     "type": "non veg",
     "image": "https://res.cloudinary.com/dex9pejve/image/upload/v1697350664/images/biryani_nsxkvh.jpg",
@@ -50,57 +50,44 @@
     "quantity": 1
   },
   {
-    image: friedFish,
-    caption: "Crispy Fried Fish",
-    description:
-      "Enjoy tender and flaky fish, coated in a crispy, golden-brown batter.",
-    price: "120",
-    rating: "4.5",
-    quantity: 1,
+    "image": "friedFish",
+    "caption": "Crispy Fried Fish",
+    "description": "Enjoy tender and flaky fish, coated in a crispy, golden-brown batter.",
+    "price": "120",
+    "rating": "4.5",
+    "quantity": 1
+  },
+
+  {
+    "image": "noodles",
+    "caption": "Noodle Extravaganza",
+    "description": "Experience the world of noodles, from slurp-worthy ramen to stir-fried classics.",
+    "price": "65",
+    "rating": "4.4",
+    "quantity": 1
   },
   {
-    image: friedRice,
-    caption: "Flavorful Fried Rice Dishes",
-    description:
-      "Satisfy your cravings with aromatic fried rice, bursting with savory ingredients and spices.",
-    price: "120",
-    rating: "4.6",
-    quantity: 1,
+    "image": "pancakes",
+    "caption": "Fluffy and Delicious Pancakes!",
+    "description": "Start your day with fluffy pancakes, drizzled with syrup and topped with your favorite extras.",
+    "price": "70",
+    "rating": "4.8",
+    "quantity": 1
   },
   {
-    image: noodles,
-    caption: "Noodle Extravaganza",
-    description:
-      "Experience the world of noodles, from slurp-worthy ramen to stir-fried classics.",
-    price: "65",
-    rating: "4.4",
-    quantity: 1,
+    "image": "burgers",
+    "caption": "Irresistible Burger Creations",
+    "description": "Sink your teeth into juicy, mouthwatering burgers with a variety of toppings and flavors.",
+    "price": "60",
+    "rating": "4.4",
+    "quantity": 1
   },
   {
-    image: pancakes,
-    caption: "Fluffy and Delicious Pancakes!",
-    description:
-      "Start your day with fluffy pancakes, drizzled with syrup and topped with your favorite extras.",
-    price: "70",
-    rating: "4.8",
-    quantity: 1,
-  },
-  {
-    image: burgers,
-    caption: "Irresistible Burger Creations",
-    description:
-      "Sink your teeth into juicy, mouthwatering burgers with a variety of toppings and flavors.",
-    price: "60",
-    rating: "4.4",
-    quantity: 1,
-  },
-  {
-    image: iceCream,
-    caption: "Ice Cream Sundae - A Classic Summer Treat!",
-    description:
-      "A bowl of ice cream topped with whipped cream, chocolate sauce, and a variety of toppings, such as nuts, sprinkles, and maraschino cherries",
-    price: "50",
-    rating: "4.8",
-    quantity: 1,
-  },
-];
+    "image": "iceCream",
+    "caption": "Ice Cream Sundae - A Classic Summer Treat!",
+    "description": "A bowl of ice cream topped with whipped cream, chocolate sauce, and a variety of toppings, such as nuts, sprinkles, and maraschino cherries",
+    "price": "50",
+    "rating": "4.8",
+    "quantity": 1
+  }
+]
