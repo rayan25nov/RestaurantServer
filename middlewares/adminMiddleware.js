@@ -72,20 +72,22 @@ const requireAuth = async (req, res, next) => {
   }
 };
 // middleware to check if user is a Chef
-const requireChef = async (req, res, next) => {
+const requireStaff = async (req, res, next) => {
   try {
     const token =
       req.cookies.jwt ||
       req.body.token ||
       req.headers.authorization.replace("Bearer ", "");
     const decode = jwt.verify(token, process.env.SECRET_KEY);
-    // console.log(decode);
+    console.log(decode);
     // Check if the user has the chef or waiter role
     const user = await Staff.findOne({ _id: decode.userId });
 
     if (
       !user ||
-      (user.accessLevel !== "chef" && user.accessLevel !== "waiter")
+      (user.accessLevel !== "chef" &&
+        user.accessLevel !== "waiter" &&
+        user.accessLevel !== "accountant")
     ) {
       return res
         .status(403)
@@ -98,12 +100,11 @@ const requireChef = async (req, res, next) => {
   } catch (error) {
     return res.status(401).json({
       error: error.message,
-      message: "Something went wrong during decoding token of a chef",
+      message: "Something went wrong during decoding token of a Staff",
       success: false,
     });
   }
 };
-
 
 // Middleware to check token expiration
 const checkTokenExpiration = (req, res) => {
@@ -127,13 +128,18 @@ const checkTokenExpiration = (req, res) => {
         decodedToken,
       });
     }
-    return res
-      .status(200)
-      .json({ message: "Token is valid", expired: false, decodedToken });
+    return res.status(200).json({
+      message: "Token is valid",
+      expired: false,
+      decodedToken,
+    });
   } catch (error) {
     // console.error("Error verifying token:", error);
-    return res.status(401).json({ message: "Token Expired", expired: true });
+    return res.status(401).json({
+      message: "Token Expired",
+      expired: true,
+    });
   }
 };
 
-export { requireAdmin, checkTokenExpiration, requireAuth, requireChef };
+export { requireAdmin, checkTokenExpiration, requireAuth, requireStaff };

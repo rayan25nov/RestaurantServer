@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { create } from "qrcode";
 
 const orderItemSchema = new mongoose.Schema({
   product: {
@@ -23,6 +24,10 @@ const oldOrderSchema = new mongoose.Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now,
   },
 });
 

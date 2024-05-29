@@ -24,7 +24,7 @@ const capturePayment = async (req, res) => {
     const options = { amount, currency };
     // OrdersId of the orders
     const ordersId = orders.map((order) => order._id);
-    console.log(ordersId);
+    // console.log(ordersId);
     // check if payment already exists for the order
     const existingPayment = await Payment.findOne({
       orderIds: { $in: ordersId },
@@ -35,7 +35,7 @@ const capturePayment = async (req, res) => {
         message: "Payment already captured for the order",
       });
     }
-    console.log("options", options);
+    // console.log("options", options);
     const paymentResponse = await razorpay.orders.create(options);
     const payment = new Payment({
       razorpayPaymentId: paymentResponse.id,
@@ -62,7 +62,7 @@ const capturePayment = async (req, res) => {
 const verifyPayment = async (req, res) => {
   const { data } = req.body;
   const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = data;
-  console.log(data);
+  // console.log(data);
   const body = razorpay_order_id + "|" + razorpay_payment_id;
 
   const expectedSignature = crypto

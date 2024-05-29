@@ -24,7 +24,7 @@ const giveFeedback = async (req, res) => {
     // Check if the upload was successful
     const uploadResult = res.locals.uploadResult;
     const imageUrl = uploadResult.imageUrl;
-    console.log(imageUrl);
+    // console.log(imageUrl);
 
     const feedback = new Feedback({
       user: userId,

@@ -1,6 +1,6 @@
 import Order from "../models/orderModel.js";
 import Cart from "../models/cartModel.js";
-import Product from "../models/productModel.js";
+import { io } from "../app.js";
 
 // @desc    Place an order from the cart
 // @route   POST /orders
@@ -43,6 +43,8 @@ const placeOrder = async (req, res) => {
     // Empty the cart
     cart.items = [];
     await cart.save();
+
+    io.emit("orderUpdated", order);
 
     res.status(201).json({
       success: true,
@@ -94,8 +96,8 @@ const getOrders = async (req, res) => {
 // @access  Private
 const getAllOrders = async (req, res) => {
   try {
-    // Find all orders
-    const orders = await Order.find();
+    // Find all orders and populate the products
+    const orders = await Order.find({}).populate("products.product");
 
     res.status(200).json({
       success: true,
@@ -133,6 +135,9 @@ const updateOrderStatus = async (req, res) => {
     order.status = status;
     await order.save();
 
+    // Emit order update event
+    io.emit("orderUpdated", order);
+
     res.status(200).json({
       success: true,
       data: order,
@@ -169,6 +174,11 @@ const updatePaymentStatus = async (req, res) => {
     order.paymentStatus = status;
     await order.save();
 
+    // Emit order update event
+    // console.log("Updating payment status...");
+    io.emit("orderUpdated", order);
+    // console.log("Payment status updated and emitted successfully");
+
     res.status(200).json({
       success: true,
       data: order,
@@ -199,6 +209,8 @@ const deleteOrder = async (req, res) => {
         message: "Order not found",
       });
     }
+    // Emit order delete event
+    io.emit("orderDeleted", order._id);
 
     res.status(200).json({
       success: true,

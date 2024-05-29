@@ -14,7 +14,7 @@ const addOrder = async (req, res) => {
         message: "you haven't ordered anything yet",
       });
     }
-    console.log(order);
+    // console.log(order);
     // create a new old order
     const oldOrder = new OldOrder({
       products: order[0].products,
@@ -95,4 +95,28 @@ const getAllOrders = async (req, res) => {
     });
   }
 };
-export { addOrder, getOrders, getAllOrders };
+
+// @desc    Get all orders all users for admin
+// @route   GET /admin/all-orders
+// @access  Private
+const getAllOrdersOfAllUser = async (req, res) => {
+  try {
+    // Find all orders and populate the product associated with it
+    const orders = await OldOrder.find().populate("products.product");
+    // Reverse the order of the fetched orders so that new orders appear first
+    const reversedOrders = orders.reverse();
+    res.status(200).json({
+      success: true,
+      data: reversedOrders,
+      message: "All Orders retrieved successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      message: "Something went wrong while retrieving orders",
+    });
+  }
+};
+
+export { addOrder, getOrders, getAllOrders, getAllOrdersOfAllUser };

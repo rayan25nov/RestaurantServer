@@ -5,7 +5,7 @@ const adminSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  username: {
+  email: {
     type: String,
     required: true,
     unique: true,
@@ -13,6 +13,10 @@ const adminSchema = new mongoose.Schema({
   password: {
     type: String,
     required: true,
+  },
+  verified: {
+    type: Boolean,
+    default: false,
   },
   role: {
     type: String,

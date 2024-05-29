@@ -2,9 +2,34 @@ import express from "express";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import fileUpload from "express-fileupload";
+import { Server } from "socket.io";
+import http from "http"; // Import the http module
 
 // Initializing app
 const app = express();
+const server = http.createServer(app); // Create an HTTP server
+const admin = process.env.ADMIN;
+const client = process.env.CLIENT;
+const io = new Server(server, {
+  cors: {
+    origin: [admin, client], // Allow both client and admin origins
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    allowedHeaders: ["my-custom-header"],
+    credentials: true,
+  },
+});
+
+// Handling socket.io connections
+io.on("connection", (socket) => {
+  console.log("A user connected with id : ", socket.id);
+
+  socket.on("disconnect", () => {
+    console.log("User disconnected");
+  });
+});
+
+// Export io to use in other files
+export { io };
 
 // Importing the Database Connection
 import dbConnect from "./db/Config.js";
@@ -44,7 +69,8 @@ app.use(
     tempFileDir: "/tmp/",
   })
 );
-// routes
+
+// Routes
 app.use("/admin", adminRoutes);
 app.use("/products", productRoutes);
 app.use("/cart", cartRoutes);
@@ -59,7 +85,8 @@ app.use("/feedbacks", feedbackRoutes);
 import { checkTokenExpiration } from "./middlewares/adminMiddleware.js";
 app.use("/checkTokenExpiration", checkTokenExpiration);
 
-// listening the server
-app.listen(process.env.PORT, () => {
-  console.log(`Server is running on port ${process.env.PORT}`);
+// Listening to the server
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
 });

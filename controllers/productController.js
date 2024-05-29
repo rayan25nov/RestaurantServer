@@ -58,7 +58,7 @@ const getProduct = async (req, res) => {
 const getSpecialProducts = async (req, res) => {
   try {
     const products = await Product.find({ special: true });
-    console.log(products);
+    // console.log(products);
     if (!products || products.length === 0) {
       return res.status(404).json({
         success: false,
@@ -142,7 +142,7 @@ const createProduct = async (req, res) => {
     // Check if the upload was successful
     const uploadResult = res.locals.uploadResult;
     const imageUrl = uploadResult.imageUrl;
-    console.log(imageUrl);
+    // console.log(imageUrl);
 
     // Create a new product object with the uploaded image URL and other product details
     const product = new Product({

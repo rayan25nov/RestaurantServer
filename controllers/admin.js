@@ -1,5 +1,6 @@
 import Admin from "../models/adminModel.js";
 import Token from "../models/tokenModel.js";
+import crypto from "crypto";
 import mailSender from "../utils/mailSender.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
@@ -10,12 +11,13 @@ dotenv.config();
 // @route   POST /admin
 // @access  Public
 const registerAdmin = async (req, res) => {
-  const { name, username, password } = req.body;
+  const { name, email, password } = req.body;
+  console.log(name, email, password);
 
   try {
     // Check if an admin already exists
-    const existingAdmin = await Admin.findOne({ username });
-
+    const existingAdmin = await Admin.findOne({ role: "admin" });
+    console.log(existingAdmin);
     if (existingAdmin) {
       return res.status(400).json({
         success: false,
@@ -25,36 +27,32 @@ const registerAdmin = async (req, res) => {
 
     // If no admin exists, proceed with registration
     const hashedPassword = await bcrypt.hash(password, 10);
-
+    // console.log(hashedPassword);
     const newAdmin = new Admin({
       name,
-      username,
+      email,
       password: hashedPassword,
     });
-
+    console.log(newAdmin);
     await newAdmin.save();
+    console.log("working");
 
-    // Generate JWT token
-    const token = jwt.sign(
-      { userId: newAdmin._id, role: "admin" },
-      process.env.SECRET_KEY,
-      {
-        expiresIn: "1h",
-      }
+    const token = await new Token({
+      userId: newAdmin._id,
+      token: crypto.randomBytes(32).toString("hex"),
+    }).save();
+    const url = `${process.env.ADMIN}/admin/${newAdmin._id}/verify/${token.token}`;
+    await mailSender(
+      newAdmin.email,
+      "To complete your registration, please verify your email address by clicking the button below:",
+      url,
+      "Verify Email"
     );
 
-    res
-      .cookie("jwt", token, {
-        httpOnly: true,
-        maxAge: 60 * 60 * 1000,
-      })
-      .status(200)
-      .json({
-        success: true,
-        message: "Admin registered successfully",
-        data: newAdmin,
-        token,
-      });
+    res.status(201).send({
+      message: "An Email sent to your account please verify",
+      success: true,
+    });
   } catch (error) {
     res.status(400).json({
       success: false,
@@ -68,9 +66,10 @@ const registerAdmin = async (req, res) => {
 // @route   POST /admin/login
 // @access  Public
 const loginAdmin = async (req, res) => {
-  const { username, password } = req.body;
+  const { email, password } = req.body;
+  console.log(email, password);
   try {
-    const admin = await Admin.findOne({ username });
+    const admin = await Admin.findOne({ email });
 
     if (!admin) {
       return res.status(400).json({
@@ -113,6 +112,50 @@ const loginAdmin = async (req, res) => {
       success: false,
       message: "Something went wrong while logging in admin",
       data: error.message,
+    });
+  }
+};
+
+// @desc      Verify user
+// @route     GET /admin/:id/verify/:token
+// @access    Public  // VERIFIED
+const verifyToken = async (req, res) => {
+  try {
+    // console.log(req.params.id);
+    // console.log(req.params.token);
+    const admin = await Admin.findOne({ _id: req.params.id });
+    // console.log(admin);
+    if (!admin) {
+      return res.status(400).send({
+        message: "Admin doesn't found",
+        success: false,
+      });
+    }
+
+    const token = await Token.findOne({
+      userId: admin._id,
+      token: req.params.token,
+    });
+    // console.log(token);
+    if (!token) {
+      return res.status(400).send({
+        message: "Account verified earlier",
+        success: true,
+      });
+    }
+
+    await Admin.updateOne({ _id: admin._id }, { $set: { verified: true } });
+    await Token.deleteOne({ userId: admin._id });
+
+    res.status(200).send({
+      message: "Email verified successfully",
+      success: true,
+    });
+  } catch (error) {
+    res.status(500).send({
+      message: "Internal Server Error Token not verified",
+      success: false,
+      error: error.message,
     });
   }
 };
@@ -314,4 +357,5 @@ export {
   deleteAdminProfile,
   forgotPassword,
   resetPassword,
+  verifyToken,
 };

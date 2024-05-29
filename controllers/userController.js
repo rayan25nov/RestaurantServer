@@ -49,7 +49,7 @@ const signupHandler = async (req, res) => {
       userId: newUser._id,
       token: crypto.randomBytes(32).toString("hex"),
     }).save();
-    const url = `${process.env.BASE_URL}users/${newUser.id}/verify/${token.token}`;
+    const url = `${process.env.CLIENT}/users/${newUser._id}/verify/${token.token}`;
     await mailSender(
       newUser.email,
       "To complete your registration, please verify your email address by clicking the button below:",
@@ -242,7 +242,7 @@ const updateProfileImage = async (req, res) => {
     // Check if the upload was successful
     const uploadResult = res.locals.uploadResult;
     const imageUrl = uploadResult.imageUrl;
-    console.log(imageUrl);
+    // console.log(imageUrl);
 
     user.image = imageUrl;
     await user.save();
